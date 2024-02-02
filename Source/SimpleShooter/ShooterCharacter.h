@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "ShooterCharacter.generated.h"
 
+class AGun;
 class UInputAction;
 struct FInputActionValue;
 class UInputMappingContext;
@@ -41,6 +42,11 @@ protected:
 	UInputAction* LookAction;
 	void Look(const FInputActionValue& Value);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UInputAction* FireAction;
+	void Fire(const FInputActionValue& Value);
+	
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -52,4 +58,10 @@ public:
 private:
 	UPROPERTY(EditAnywhere)
 	float RotationRate = 30;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AGun> GunClass;
+
+	UPROPERTY()
+	AGun* Gun;
 };
