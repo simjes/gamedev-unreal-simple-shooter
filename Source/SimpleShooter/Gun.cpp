@@ -3,9 +3,8 @@
 
 #include "Gun.h"
 
-#include "KismetTraceUtils.h"
-#include "ShooterCharacter.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -25,13 +24,13 @@ void AGun::PullTrigger() const
 {
 	UGameplayStatics::SpawnEmitterAttached(MuzzleFlash, Mesh, TEXT("MuzzleFlashSocket"));
 
-	const APawn* Owner = Cast<APawn>(GetOwner());
+	APawn* Owner = Cast<APawn>(GetOwner());
 	if (!Owner)
 	{
 		return;
 	}
 
-	const AController* OwnerController = Owner->GetController();
+	AController* OwnerController = Owner->GetController();
 	if (!OwnerController)
 	{
 		return;
@@ -49,6 +48,12 @@ void AGun::PullTrigger() const
 	{
 		FVector ShotDirection = -Rotation.Vector();
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitFlash, HitResult.Location, ShotDirection.Rotation());
+		if (AActor* HitActor = HitResult.GetActor())
+		{
+			FPointDamageEvent DamageEvent(Damage, HitResult, ShotDirection, nullptr);
+			// same 👆 FPointDamageEvent DamageEvent = FPointDamageEvent(Damage, HitResult, ShotDirection, nullptr);
+			HitActor->TakeDamage(Damage, DamageEvent, OwnerController, Owner);
+		}
 	}
 }
 

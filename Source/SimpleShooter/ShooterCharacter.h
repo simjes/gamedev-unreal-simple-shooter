@@ -23,7 +23,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputMappingContext* PlayerMappingContext;
 
@@ -45,15 +45,20 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* FireAction;
 	void Fire(const FInputActionValue& Value);
-	
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
+	virtual float TakeDamage(
+		float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser
+	) override;
+
+	UFUNCTION(BlueprintPure)
+	bool IsDead() const;
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -64,4 +69,10 @@ private:
 
 	UPROPERTY()
 	AGun* Gun;
+
+	UPROPERTY(EditDefaultsOnly)
+	float MaxHealth = 100;
+
+	UPROPERTY(VisibleAnywhere)
+	float Health;
 };
