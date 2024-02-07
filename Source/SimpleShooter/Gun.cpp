@@ -10,7 +10,7 @@
 // Sets default values
 AGun::AGun()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
@@ -23,38 +23,21 @@ AGun::AGun()
 void AGun::PullTrigger() const
 {
 	UGameplayStatics::SpawnEmitterAttached(MuzzleFlash, Mesh, TEXT("MuzzleFlashSocket"));
-
-	APawn* Owner = Cast<APawn>(GetOwner());
-	if (!Owner)
-	{
-		return;
-	}
-
-	AController* OwnerController = Owner->GetController();
-	if (!OwnerController)
-	{
-		return;
-	}
-
-	FVector Location;
-	FRotator Rotation;
-	OwnerController->GetPlayerViewPoint(Location, Rotation);
-	
-	FVector End = Location + Rotation.Vector() * MaxRange;
+	UGameplayStatics::SpawnSoundAttached(MuzzleSound, Mesh, TEXT("MuzzleFlashSocket"));
 
 	FHitResult HitResult;
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
-	Params.AddIgnoredActor(GetOwner());
-	const bool bDidHit = GetWorld()->LineTraceSingleByChannel(HitResult, Location, End, ECC_GameTraceChannel1, Params);
+	FVector ShotDirection;
+	bool bDidHit = GunTrace(HitResult, ShotDirection);
 	if (bDidHit)
 	{
-		FVector ShotDirection = -Rotation.Vector();
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitFlash, HitResult.Location, ShotDirection.Rotation());
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), HitSound, HitResult.Location);
 		if (AActor* HitActor = HitResult.GetActor())
 		{
 			FPointDamageEvent DamageEvent(Damage, HitResult, ShotDirection, nullptr);
 			// same 👆 FPointDamageEvent DamageEvent = FPointDamageEvent(Damage, HitResult, ShotDirection, nullptr);
+			AController* OwnerController = GetOwnerController();
+			// prone to future null pointers 👆 we already checked Owner controller in GunTrace, but that could be changed and create a future bug
 			HitActor->TakeDamage(Damage, DamageEvent, OwnerController, Owner);
 		}
 	}
@@ -64,13 +47,43 @@ void AGun::PullTrigger() const
 void AGun::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
 void AGun::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
+bool AGun::GunTrace(FHitResult& Hit, FVector& ShotDirection) const
+{
+	const AController* OwnerController = GetOwnerController();
+	if (!OwnerController)
+	{
+		return false;
+	}
+
+	FVector Location;
+	FRotator Rotation;
+	OwnerController->GetPlayerViewPoint(Location, Rotation);
+
+	const FVector End = Location + Rotation.Vector() * MaxRange;
+	ShotDirection = -Rotation.Vector();
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	Params.AddIgnoredActor(GetOwner());
+	return GetWorld()->LineTraceSingleByChannel(Hit, Location, End, ECC_GameTraceChannel1, Params);
+}
+
+AController* AGun::GetOwnerController() const
+{
+	const APawn* Owner = Cast<APawn>(GetOwner());
+	if (!Owner)
+	{
+		return nullptr;
+	}
+
+	AController* OwnerController = Owner->GetController();
+	return OwnerController;
+}
