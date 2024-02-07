@@ -73,7 +73,7 @@ void AShooterCharacter::Look(const FInputActionValue& Value)
 	AddControllerPitchInput(-Input.Y * RotationRate);
 }
 
-void AShooterCharacter::Fire(const FInputActionValue& Value)
+void AShooterCharacter::Fire()
 {
 	if (Gun)
 	{

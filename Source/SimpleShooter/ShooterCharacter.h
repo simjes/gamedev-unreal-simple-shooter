@@ -44,7 +44,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* FireAction;
-	void Fire(const FInputActionValue& Value);
+
 
 public:
 	// Called every frame
@@ -59,6 +59,8 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	bool IsDead() const;
+
+	void Fire();
 
 private:
 	UPROPERTY(EditAnywhere)
